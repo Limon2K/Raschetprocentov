@@ -25,7 +25,7 @@ def input_date(date_name: str) -> date:
 
 def input_duration() -> int:
     while(True):
-        duration_str=input("Введите срок размещения в месяцах(м) или днях(д) или Ж - для выхода: ").upper()
+        duration_str=input("Введите срок размещения в месяцах(м) или днях(д) [60д] или Ж - для выхода: ").upper()
         if duration_str =="Ж" or duration_str =="Q": 
             exit(1)
         elif duration_str.endswith("М"):
