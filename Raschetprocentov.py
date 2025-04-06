@@ -12,6 +12,14 @@ def is_float(element: str) -> bool:
     except ValueError:
         return False
 
+def is_leap_year(year: int) -> bool:
+    if year % 4 != 0:
+        return False
+    elif year % 100 != 0:
+        return True
+    else:
+        return year % 400 == 0
+
 def input_date(date_name: str) -> date:
     while (True):
         date_str=input(f"Введите дату {date_name} (ДД.ММ.ГГГГ) или Ж - для выхода: ")
@@ -89,7 +97,7 @@ if (cap_p == False or (cap_p == True and period_p == 0)) and duration_months == 
         days_left=days_left-days_in_year
         date_end=date_start_calc+timedelta(days=days_in_year-1)
         daysofyear=365
-        if eoy_date.year % 4 == 0:
+        if is_leap_year(eoy_date.year):
             daysofyear=366
         interest_day=interest/daysofyear
         year_procents+=deposit*interest_day*days_in_year/100
