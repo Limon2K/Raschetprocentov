@@ -33,7 +33,7 @@ def input_duration() -> int:
         elif duration_str.endswith("Д"):
             return [0,int(duration_str.replace("Д",""))]
         else:
-            print(f"Строка {duration_str} не соотвествует формату ввода ##м или ##д") 
+            print(f"Строка {duration_str} не соотвествует формату ввода ##м или ##д ") 
 
 def input_decimal(decimal_name: str, controlmin=0, controlmax=0) ->float:
     while(True):
