@@ -23,7 +23,7 @@ def is_leap_year(year: int) -> bool:
 def input_date(date_name: str) -> date:
     while (True):
         date_str=input(f"Введите дату {date_name} (ДД.ММ.ГГГГ) или Ж - для выхода: ")
-        if date_str =="Ж" or date_str =="Q": 
+        if date_str in ("Ж", "Q"):
             exit(1)
         try:
             day, month, year = [int(item) for item in date_str.split(".")]
@@ -34,7 +34,7 @@ def input_date(date_name: str) -> date:
 def input_duration() -> int:
     while(True):
         duration_str=input("Введите срок размещения в месяцах(м) или днях(д) [60д] или Ж - для выхода: ").upper()
-        if duration_str =="Ж" or duration_str =="Q": 
+        if duration_str  in ("Ж", "Q"):
             exit(1)
         elif duration_str.endswith("М"):
             return [int(duration_str.replace("М","")),0]
@@ -46,7 +46,7 @@ def input_duration() -> int:
 def input_decimal(decimal_name: str, controlmin=0, controlmax=0) ->float:
     while(True):
         dec_str = input (f"Введите {decimal_name} или Ж - для выхода: ")
-        if dec_str =="Ж" or dec_str =="Q": 
+        if dec_str in ("Ж", "Q"):
             exit(1)
         elif is_float(dec_str):
             dec_flt= float(dec_str)
