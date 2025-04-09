@@ -61,6 +61,15 @@ def input_decimal(decimal_name: str, controlmin=0, controlmax=0) ->float:
         else:
             print(f"Строка {dec_str} не соотвествует формату ввода") 
 
+def add_month(a_date, months):
+    next_day=a_date+timedelta(1)
+    m_sum = next_day.month + months - 1
+    y = next_day.year + m_sum // 12
+    m = m_sum % 12 + 1
+    try:
+        return date(y, m, next_day.day)-timedelta(1)
+    except ValueError:
+        return date(y, m + 1, 1)-timedelta(1)
 
 date_start:     date                   # Дата размещения
 duration_days:  int     =0             # Срок в днях
@@ -70,7 +79,7 @@ interest:   float   =0                 # Ставка (%)
 period_p:   int     =0                 # Периодичность начисления процентов (0 - в конце срока; 1 - ежемесячно; 2 - ежеквартально)
 cap_p:  bool        =False             # Капитализация процентов 
 
-print("Калькулятор вкладов, v0.3 (pre-beta)\n")
+print("Калькулятор вкладов, v0.3.1 (pre-beta)\n")
 print("Расчет ставки и суммы полученых процентов по условиям банковского депозита")
 print("Необходимо ввести дату размещения, срок, сумму и ставку, а так же периодичность начисления и капитализацию процентов")
 print("В результате расчета будет выведен график начисления процентов, общая сумма процентов и эффективная ставка размещения\n")
@@ -89,7 +98,12 @@ cap_p = bool(int(input_decimal("капитализация процентов (0
 date_start_calc = date_start
 days_left=duration_days
 year_procents=0
-if (cap_p == False or (cap_p == True and period_p == 0)) and duration_months == 0:
+
+if duration_months>0:
+    duration_days=(add_month(date_start,duration_months)-date_start).days
+    date_end=add_month(date_start,duration_months)
+    
+if (cap_p == False or (cap_p == True and period_p == 0)):
     while days_left > 0:
         eoy_date=date(date_start_calc.year,12,31)
 
@@ -103,7 +117,7 @@ if (cap_p == False or (cap_p == True and period_p == 0)) and duration_months == 
         year_procents+=deposit*interest_day*days_in_year/100
         date_start_calc=eoy_date+timedelta(days=1)
 else:
-    print("Извините, у разработчиков не хватило рассудка для иных типов расчётов. В данный момент эта программа поддерживает только расчёты в днях, и без капитализации.")
+    print("Извините, у разработчиков не хватило рассудка для иных типов расчётов. В данный момент эта программа поддерживает только расчёты без капитализации.")
 #TODO:  
 
 #Вывод результатов
