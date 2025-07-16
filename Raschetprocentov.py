@@ -116,19 +116,29 @@ if (cap_p == False or (cap_p == True and period_p == 0)):
         interest_day=interest/daysofyear
         year_procents+=deposit*interest_day*days_in_year/100
         date_start_calc=eoy_date+timedelta(days=1)
+elif (cap_p == True and (period_p == 1)) and duration_months == 0:
+    date_end=date_start+timedelta(days=duration_days)
+    monthsend=(date_end.month-date_start.month)
+    if monthsend <= 0:
+        monthsend+=12
+    coaf=(interest/1200+1)**monthsend
+    year_procents=deposit*coaf
 else:
     print("Извините, у разработчиков не хватило рассудка для иных типов расчётов. В данный момент эта программа поддерживает только расчёты без капитализации.")
-#TODO:  
+#TODO:  МНОГА, С МЕСЯЦАМИ ЕЩЁ ДУМАТЬ ЧТО-ТО
 
 #Вывод результатов
 os.system("pause")
 os.system('cls')
-
-print ("date_start ",date_start)
-print ("duration_days ",duration_days)
-print ("duration_months ",duration_months)
-print ("deposit",deposit)
-print ("interest",interest)
-print ("period_p ",period_p)
-print ("cap_p ",cap_p)
-print("Вот сколько вы заработаете: ",year_procents,"\nВот когда вам вернёт деньги банк/банкир: ",date_end)
+if cap_p == True:
+    cap_p=str("Да")
+else:
+    cap_p=str("Нет")
+print ("Дата размещения депозита: ",date_start)
+print ("Продолжительность депозита (в днях): ",duration_days)
+print ("Продолжительность депозита (в месяцах): ",duration_months)
+print ("Депозит: ",deposit)
+print ("Ставка: ",interest)
+print ("Периодичность начисления процентов:  ",period_p)
+print ("Наличие капитализации: ",cap_p)
+print ("Вот сколько вы заработаете: ",year_procents,"\nВот когда вам вернёт деньги банк/банкир: ",date_end)
