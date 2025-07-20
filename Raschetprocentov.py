@@ -131,14 +131,14 @@ else:
 os.system("pause")
 os.system('cls')
 if cap_p == True:
-    cap_p=str("Да")
+    cap_p_str=str("Да")
 else:
-    cap_p=str("Нет")
+    cap_p_str=str("Нет")
 print ("Дата размещения депозита: ",date_start)
 print ("Продолжительность депозита (в днях): ",duration_days)
 print ("Продолжительность депозита (в месяцах): ",duration_months)
 print ("Депозит: ",deposit)
 print ("Ставка: ",interest)
 print ("Периодичность начисления процентов:  ",period_p)
-print ("Наличие капитализации: ",cap_p)
+print ("Наличие капитализации: ",cap_p_str)
 print ("Вот сколько вы заработаете: ",year_procents,"\nВот когда вам вернёт деньги банк/банкир: ",date_end)
