@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Калькулятор вкладов</title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script defer src="script.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        input, select, button {
+            display: block;
+            margin: 10px 0;
+            padding: 6px;
+            width: 100%;
+            max-width: 300px;
+        }
+        button {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Калькулятор банковского вклада</h2>
+
+<label>Дата размещения</label>
+<input type="date" id="dateStart">
+
+<label>Срок (в днях)</label>
+<input type="number" id="durationDays" value="60">
+
+<label>Сумма вклада (₽)</label>
+<input type="number" id="deposit">
+
+<label>Процентная ставка (%)</label>
+<input type="number" id="interest">
+
+<label>Периодичность начисления</label>
+<select id="period">
+    <option value="0">В конце срока</option>
+    <option value="1">Ежемесячно</option>
+</select>
+
+<label>Капитализация</label>
+<select id="capitalization">
+    <option value="0">Нет</option>
+    <option value="1">Да</option>
+</select>
+
+<button onclick="calculate()">Рассчитать</button>
+
+<p id="result"></p>
+
+</body>
+</html>
