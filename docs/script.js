@@ -1,143 +1,136 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<title>FinCalc</title>
 
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script defer src="script.js"></script>
-
-<style>
-:root {
-    --bg: #0f1115;
-    --card: #1a1d23;
-    --accent: #4da3ff;
-    --text: #e6e6e6;
-    --muted: #7d8796;
-    --border: #262b33;
+function isLeapYear(year) {
+    if (year % 4 !== 0) return false;
+    if (year % 100 !== 0) return true;
+    return year % 400 === 0;
 }
 
-* {
-    box-sizing: border-box;
+function daysInYear(date) {
+    return isLeapYear(date.getFullYear()) ? 366 : 365;
 }
 
-body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    padding: 24px;
+function addMonths(date, months) {
+    let d = new Date(date);
+    let day = d.getDate();
+    d.setMonth(d.getMonth() + months);
+
+    // защита от переполнения месяца
+    if (d.getDate() < day) {
+        d.setDate(0);
+    }
+    return d;
 }
 
-.container {
-    max-width: 420px;
-    margin: auto;
+/* ===== ОСНОВНАЯ ФУНКЦИЯ РАСЧЁТА ===== */
+
+function calculateDeposit({
+    startDate,
+    days,
+    deposit,
+    interest,
+    capitalization,
+    period
+}) {
+    let currentDate = new Date(startDate);
+    let endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + days);
+
+    let balance = deposit;
+    let totalInterest = 0;
+
+    // период начисления в месяцах
+    let periodMonths = 0;
+    if (period === 1) periodMonths = 1;
+    if (period === 2) periodMonths = 3;
+
+    /* ===== НАЧИСЛЕНИЕ В КОНЦЕ СРОКА ===== */
+    if (period === 0) {
+        let daysLeft = days;
+
+        while (daysLeft > 0) {
+            let yearDays = daysInYear(currentDate);
+            let endOfYear = new Date(currentDate.getFullYear(), 11, 31);
+
+            let chunk = Math.min(
+                Math.floor((endOfYear - currentDate) / 86400000) + 1,
+                daysLeft
+            );
+
+            let interestPart =
+                balance * (interest / 100) * chunk / yearDays;
+
+            totalInterest += interestPart;
+            daysLeft -= chunk;
+
+            currentDate = new Date(endOfYear);
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        return {
+            income: totalInterest,
+            finalAmount: balance + totalInterest,
+            endDate
+        };
+    }
+
+    /* ===== ПЕРИОДИЧЕСКОЕ НАЧИСЛЕНИЕ ===== */
+    while (currentDate < endDate) {
+        let nextDate = addMonths(currentDate, periodMonths);
+        if (nextDate > endDate) nextDate = endDate;
+
+        let periodDays =
+            Math.floor((nextDate - currentDate) / 86400000);
+
+        let yearDays = daysInYear(currentDate);
+
+        let interestPart =
+            balance * (interest / 100) * periodDays / yearDays;
+
+        if (capitalization) {
+            balance += interestPart;
+        } else {
+            totalInterest += interestPart;
+        }
+
+        currentDate = nextDate;
+    }
+
+    return {
+        income: capitalization ? balance - deposit : totalInterest,
+        finalAmount: capitalization ? balance : deposit + totalInterest,
+        endDate
+    };
 }
 
-h1 {
-    font-weight: 500;
-    font-size: 20px;
-    margin-bottom: 24px;
+/* ===== ФУНКЦИЯ, КОТОРУЮ ВЫЗЫВАЕТ КНОПКА ===== */
+
+function calculate() {
+    const dateStart = document.getElementById("dateStart").value;
+    const days = Number(document.getElementById("durationDays").value);
+    const deposit = Number(document.getElementById("deposit").value);
+    const interest = Number(document.getElementById("interest").value);
+    const period = Number(document.getElementById("period").value);
+    const capitalization = Boolean(
+        Number(document.getElementById("capitalization").value)
+    );
+
+    if (!dateStart || days <= 0 || deposit <= 0 || interest <= 0) {
+        document.getElementById("result").innerText =
+            "Пожалуйста, заполните все поля корректно.";
+        return;
+    }
+
+    const result = calculateDeposit({
+        startDate: dateStart,
+        days,
+        deposit,
+        interest,
+        capitalization,
+        period
+    });
+
+    document.getElementById("result").innerText =
+        `Доход: ${result.income.toFixed(2)} ₽
+Итоговая сумма: ${result.finalAmount.toFixed(2)} ₽
+Дата возврата: ${result.endDate.toLocaleDateString()}`;
 }
-
-.card {
-    background: var(--card);
-    padding: 18px;
-    border-radius: 14px;
-    margin-bottom: 16px;
-    border: 1px solid var(--border);
-}
-
-label {
-    font-size: 13px;
-    color: var(--muted);
-    display: block;
-    margin-bottom: 6px;
-}
-
-input, select {
-    width: 100%;
-    padding: 10px;
-    background: #14171c;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-size: 14px;
-    margin-bottom: 14px;
-}
-
-input:focus, select:focus {
-    outline: none;
-    border-color: var(--accent);
-}
-
-button {
-    width: 100%;
-    padding: 12px;
-    background: var(--accent);
-    border: none;
-    border-radius: 10px;
-    color: white;
-    font-size: 14px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-button:hover {
-    opacity: 0.85;
-}
-
-.result {
-    margin-top: 12px;
-    font-size: 14px;
-    line-height: 1.6;
-}
-
-.highlight {
-    font-size: 18px;
-    font-weight: 500;
-}
-</style>
-</head>
-
-<body>
-<div class="container">
-
-<h1>Калькулятор вклада</h1>
-
-<div class="card">
-
-<label>Дата размещения</label>
-<input type="date" id="dateStart">
-
-<label>Срок (в днях)</label>
-<input type="number" id="durationDays" placeholder="Например: 180">
-
-<label>Сумма вклада</label>
-<input type="number" id="deposit" placeholder="100000">
-
-<label>Процентная ставка (%)</label>
-<input type="number" id="interest" placeholder="10">
-
-<label>Период начисления</label>
-<select id="period">
-    <option value="0">В конце срока</option>
-    <option value="1">Ежемесячно</option>
-    <option value="2">Ежеквартально</option>
-</select>
-
-<label>Капитализация</label>
-<select id="capitalization">
-    <option value="0">Нет</option>
-    <option value="1">Да</option>
-</select>
-
-<button onclick="calculate()">Рассчитать</button>
-
-<div class="result" id="result"></div>
-
-</div>
-
-</div>
-</body>
-</html>
