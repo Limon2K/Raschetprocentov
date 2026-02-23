@@ -23,6 +23,13 @@
   <ItemGroup>
     <Compile Include="Raschetprocentov.py" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="docs\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="docs\index.html" />
+    <Content Include="docs\script.js" />
+  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
        Visual Studio and specify your pre- and post-build commands in
