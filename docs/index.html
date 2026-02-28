@@ -320,35 +320,37 @@ function sortBanksByRate(){
 }
 
 function sortBanksByProfit(){
-    const dateStart=document.getElementById("dateStart").value;
-    const days=Number(document.getElementById("durationDays").value);
-    const deposit=Number(document.getElementById("deposit").value);
+    const dateStart = document.getElementById("dateStart").value;
+    const days = Number(document.getElementById("durationDays").value);
+    const deposit = Number(document.getElementById("deposit").value);
 
-    if(!dateStart||days<=0||deposit<=0){
+    if(!dateStart || days<=0 || deposit<=0){
         alert("Введите дату, срок и сумму для расчёта выгоды.");
         return;
     }
 
-    const sorted=[...banksData].sort((a,b)=>{
-        const resA=calculateDeposit({
-            startDate:dateStart,
+    const sorted = [...banksData].sort((a,b)=>{
+        const resA = calculateDeposit({
+            startDate: dateStart,
             days,
             deposit,
-            interest:a.interestRate,
-            capitalization:a.capitalization,
-            period:a.interestPeriod===1?1:a.interestPeriod===3?2:0
+            interest: a.interestRate,
+            capitalization: a.capitalization,
+            period: a.interestPeriod === 1 ? 1 :
+                    a.interestPeriod === 3 ? 2 : 0
         });
 
-        const resB=calculateDeposit({
-            startDate:dateStart,
+        const resB = calculateDeposit({
+            startDate: dateStart,
             days,
             deposit,
-            interest:b.interestRate,
-            capitalization:b.capitalization,
-            period:b.interestPeriod===1?1:b.interestPeriod===3?2:0
+            interest: b.interestRate,
+            capitalization: b.capitalization,
+            period: b.interestPeriod === 1 ? 1 :
+                    b.interestPeriod === 3 ? 2 : 0
         });
 
-        return resB.income-resA.income;
+        return resB.income - resA.income;
     });
 
     displayBanks(sorted);
