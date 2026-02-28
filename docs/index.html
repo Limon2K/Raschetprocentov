@@ -5,7 +5,6 @@
 <title>FinCalc</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script defer src="script.js"></script>
 
 <style>
 :root {
@@ -17,9 +16,7 @@
     --border: #262b33;
 }
 
-* {
-    box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
     margin: 0;
@@ -29,10 +26,7 @@ body {
     padding: 24px;
 }
 
-.container {
-    max-width: 420px;
-    margin: auto;
-}
+.container { max-width: 420px; margin: auto; }
 
 h1 {
     font-weight: 500;
@@ -84,8 +78,13 @@ button {
     margin-bottom: 10px;
 }
 
-button:hover {
-    opacity: 0.85;
+button:hover { opacity: 0.85; }
+
+.small-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    margin-top: 8px;
+    width: auto;
 }
 
 .result {
@@ -101,16 +100,6 @@ button:hover {
     margin-bottom: 10px;
     border: 1px solid var(--border);
 }
-
-.bank-card strong {
-    font-size: 15px;
-}
-
-.small-btn {
-    padding: 6px;
-    font-size: 13px;
-    margin-top: 8px;
-}
 </style>
 </head>
 
@@ -125,7 +114,7 @@ button:hover {
 <input type="date" id="dateStart">
 
 <label>Срок (в днях)</label>
-<input type="number" id="durationDays" placeholder="Например: 180">
+<input type="number" id="durationDays" placeholder="180">
 
 <label>Сумма вклада</label>
 <input type="number" id="deposit" placeholder="100000">
@@ -147,7 +136,6 @@ button:hover {
 </select>
 
 <button onclick="calculate()">Рассчитать</button>
-
 <div class="result" id="result"></div>
 
 </div>
@@ -155,9 +143,195 @@ button:hover {
 <h1 style="margin-top:30px;">Доступные вклады</h1>
 
 <button onclick="sortBanksByRate()">Сортировать по ставке ↓</button>
+<button onclick="sortBanksByProfit()">Сортировать по выгоде ↓</button>
 
 <div id="banksContainer"></div>
 
 </div>
+
+<script>
+// ===== Расчёт =====
+
+function isLeapYear(year){
+    if (year % 4 !== 0) return false;
+    if (year % 100 !== 0) return true;
+    return year % 400 === 0;
+}
+
+function daysInYear(date){
+    return isLeapYear(date.getFullYear()) ? 366 : 365;
+}
+
+function addMonths(date, months){
+    let d = new Date(date);
+    let day = d.getDate();
+    d.setMonth(d.getMonth() + months);
+    if (d.getDate() < day) d.setDate(0);
+    return d;
+}
+
+function calculateDeposit({startDate,days,deposit,interest,capitalization,period}){
+    let currentDate = new Date(startDate);
+    let endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + days);
+
+    let balance = deposit;
+    let totalInterest = 0;
+
+    let periodMonths = period === 1 ? 1 : period === 2 ? 3 : 0;
+
+    if(period === 0){
+        let yearDays = daysInYear(currentDate);
+        totalInterest = balance*(interest/100)*days/yearDays;
+        return {income: totalInterest, finalAmount: balance+totalInterest};
+    }
+
+    while(currentDate < endDate){
+        let nextDate = addMonths(currentDate,periodMonths);
+        if(nextDate > endDate) nextDate = endDate;
+
+        let periodDays = Math.floor((nextDate-currentDate)/86400000);
+        let yearDays = daysInYear(currentDate);
+
+        let interestPart = balance*(interest/100)*periodDays/yearDays;
+
+        if(capitalization) balance+=interestPart;
+        else totalInterest+=interestPart;
+
+        currentDate = nextDate;
+    }
+
+    return {
+        income: capitalization ? balance-deposit : totalInterest,
+        finalAmount: capitalization ? balance : deposit+totalInterest
+    };
+}
+
+function calculate(){
+    const dateStart = document.getElementById("dateStart").value;
+    const days = Number(document.getElementById("durationDays").value);
+    const deposit = Number(document.getElementById("deposit").value);
+    const interest = Number(document.getElementById("interest").value);
+    const period = Number(document.getElementById("period").value);
+    const capitalization = Boolean(Number(document.getElementById("capitalization").value));
+
+    if(!dateStart || days<=0 || deposit<=0 || interest<=0){
+        document.getElementById("result").innerText="Заполните поля корректно.";
+        return;
+    }
+
+    const result = calculateDeposit({startDate:dateStart,days,deposit,interest,capitalization,period});
+
+    document.getElementById("result").innerText=
+        `Доход: ${result.income.toFixed(2)} ₽
+Итоговая сумма: ${result.finalAmount.toFixed(2)} ₽`;
+}
+
+// ===== Банки =====
+
+let banksData=[
+{
+    id:1,
+    bankName:"ТестБанк",
+    depositName:"Надёжный",
+    interestRate:10,
+    minAmount:10000,
+    minDays:90,
+    maxDays:365,
+    capitalization:true,
+    interestPeriod:1
+},
+{
+    id:2,
+    bankName:"ФинБанк",
+    depositName:"Доходный",
+    interestRate:9,
+    minAmount:5000,
+    minDays:30,
+    maxDays:180,
+    capitalization:false,
+    interestPeriod:3
+}
+];
+
+function periodText(p){
+    if(p===1) return "Ежемесячно";
+    if(p===3) return "Ежеквартально";
+    return "В конце срока";
+}
+
+function displayBanks(banks){
+    const container=document.getElementById("banksContainer");
+    container.innerHTML="";
+
+    banks.forEach(bank=>{
+        const card=document.createElement("div");
+        card.className="bank-card";
+
+        card.innerHTML=`
+        <strong>${bank.bankName}</strong><br>
+        ${bank.depositName}<br>
+        Ставка: <b>${bank.interestRate}%</b><br>
+        Период начисления: ${periodText(bank.interestPeriod)}<br>
+        Капитализация: ${bank.capitalization?"Да":"Нет"}<br>
+        <button class="small-btn" onclick="selectBank(${bank.id})">Выбрать</button>
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+function selectBank(id){
+    const bank=banksData.find(b=>b.id===id);
+    document.getElementById("interest").value=bank.interestRate;
+    document.getElementById("capitalization").value=bank.capitalization?1:0;
+    document.getElementById("period").value=
+        bank.interestPeriod===1?1:
+        bank.interestPeriod===3?2:0;
+}
+
+function sortBanksByRate(){
+    const sorted=[...banksData].sort((a,b)=>b.interestRate-a.interestRate);
+    displayBanks(sorted);
+}
+
+function sortBanksByProfit(){
+    const dateStart=document.getElementById("dateStart").value;
+    const days=Number(document.getElementById("durationDays").value);
+    const deposit=Number(document.getElementById("deposit").value);
+
+    if(!dateStart||days<=0||deposit<=0){
+        alert("Введите дату, срок и сумму для расчёта выгоды.");
+        return;
+    }
+
+    const sorted=[...banksData].sort((a,b)=>{
+        const resA=calculateDeposit({
+            startDate:dateStart,
+            days,
+            deposit,
+            interest:a.interestRate,
+            capitalization:a.capitalization,
+            period:a.interestPeriod===1?1:a.interestPeriod===3?2:0
+        });
+
+        const resB=calculateDeposit({
+            startDate:dateStart,
+            days,
+            deposit,
+            interest:b.interestRate,
+            capitalization:b.capitalization,
+            period:b.interestPeriod===1?1:b.interestPeriod===3?2:0
+        });
+
+        return resB.income-resA.income;
+    });
+
+    displayBanks(sorted);
+}
+
+displayBanks(banksData);
+</script>
+
 </body>
 </html>
