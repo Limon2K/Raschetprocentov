@@ -1,4 +1,3 @@
-
 function isLeapYear(year) {
     if (year % 4 !== 0) return false;
     if (year % 100 !== 0) return true;
@@ -196,8 +195,6 @@ function selectBank(id) {
     else
         document.getElementById("period").value = 0;
 }
-
-=
 
 window.onload = function() {
     loadBanks();
