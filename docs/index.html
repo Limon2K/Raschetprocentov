@@ -261,19 +261,43 @@ function periodText(p){
 }
 
 function displayBanks(banks){
-    const container=document.getElementById("banksContainer");
-    container.innerHTML="";
+    const container = document.getElementById("banksContainer");
+    container.innerHTML = "";
 
-    banks.forEach(bank=>{
-        const card=document.createElement("div");
-        card.className="bank-card";
+    const dateStart = document.getElementById("dateStart").value;
+    const days = Number(document.getElementById("durationDays").value);
+    const deposit = Number(document.getElementById("deposit").value);
 
-        card.innerHTML=`
+    banks.forEach(bank => {
+        const card = document.createElement("div");
+        card.className = "bank-card";
+
+        let profitText = "";
+
+        // если введены данные — считаем выгоду
+        if(dateStart && days > 0 && deposit > 0){
+            const result = calculateDeposit({
+                startDate: dateStart,
+                days,
+                deposit,
+                interest: bank.interestRate,
+                capitalization: bank.capitalization,
+                period: bank.interestPeriod === 1 ? 1 :
+                        bank.interestPeriod === 3 ? 2 : 0
+            });
+
+            profitText = `<br><b>Доход: ${result.income.toFixed(2)} ₽</b>`;
+        }
+
+        card.innerHTML = `
         <strong>${bank.bankName}</strong><br>
         ${bank.depositName}<br>
         Ставка: <b>${bank.interestRate}%</b><br>
+        Срок: ${bank.minDays}-${bank.maxDays} дней<br>
         Период начисления: ${periodText(bank.interestPeriod)}<br>
-        Капитализация: ${bank.capitalization?"Да":"Нет"}<br>
+        Капитализация: ${bank.capitalization ? "Да" : "Нет"}
+        ${profitText}
+        <br>
         <button class="small-btn" onclick="selectBank(${bank.id})">Выбрать</button>
         `;
 
