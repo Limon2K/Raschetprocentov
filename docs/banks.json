@@ -1,0 +1,40 @@
+{
+  "banks": [
+    {
+      "id": 1,
+      "bankName": "СеверБанк",
+      "depositName": "Надёжный",
+      "interestRate": 10.5,
+      "minAmount": 10000,
+      "minDays": 90,
+      "maxDays": 365,
+      "capitalization": true,
+      "interestPeriod": 1,
+      "replenishment": false
+    },
+    {
+      "id": 2,
+      "bankName": "ВостокФинанс",
+      "depositName": "Доход+",
+      "interestRate": 11.2,
+      "minAmount": 50000,
+      "minDays": 180,
+      "maxDays": 540,
+      "capitalization": true,
+      "interestPeriod": 3,
+      "replenishment": true
+    },
+    {
+      "id": 3,
+      "bankName": "ГородКапитал",
+      "depositName": "Стандарт",
+      "interestRate": 9.8,
+      "minAmount": 5000,
+      "minDays": 30,
+      "maxDays": 365,
+      "capitalization": false,
+      "interestPeriod": 0,
+      "replenishment": false
+    }
+  ]
+}
