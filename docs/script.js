@@ -134,3 +134,71 @@ function calculate() {
 Итоговая сумма: ${result.finalAmount.toFixed(2)} ₽
 Дата возврата: ${result.endDate.toLocaleDateString()}`;
 }
+
+
+
+let banksData = [];
+
+async function loadBanks() {
+    const response = await fetch("banks.json");
+    const data = await response.json();
+    banksData = data.banks;
+    displayBanks(banksData);
+}
+
+
+
+function sortBanksByRate() {
+    const sorted = [...banksData].sort((a, b) => b.interestRate - a.interestRate);
+    displayBanks(sorted);
+}
+
+
+
+function displayBanks(banks) {
+    const container = document.getElementById("banksContainer");
+    container.innerHTML = "";
+
+    banks.forEach(bank => {
+        const card = document.createElement("div");
+        card.style.background = "#1a1d23";
+        card.style.padding = "15px";
+        card.style.borderRadius = "12px";
+        card.style.marginBottom = "10px";
+        card.style.border = "1px solid #262b33";
+
+        card.innerHTML = `
+            <strong>${bank.bankName}</strong><br>
+            ${bank.depositName}<br>
+            Ставка: <b>${bank.interestRate}%</b><br>
+            Мин. сумма: ${bank.minAmount} ₽<br>
+            Срок: ${bank.minDays}-${bank.maxDays} дней<br>
+            Капитализация: ${bank.capitalization ? "Да" : "Нет"}<br>
+            <button onclick="selectBank(${bank.id})">Выбрать</button>
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+
+
+function selectBank(id) {
+    const bank = banksData.find(b => b.id === id);
+
+    document.getElementById("interest").value = bank.interestRate;
+    document.getElementById("capitalization").value = bank.capitalization ? 1 : 0;
+
+    if (bank.interestPeriod === 1)
+        document.getElementById("period").value = 1;
+    else if (bank.interestPeriod === 3)
+        document.getElementById("period").value = 2;
+    else
+        document.getElementById("period").value = 0;
+}
+
+=
+
+window.onload = function() {
+    loadBanks();
+};
