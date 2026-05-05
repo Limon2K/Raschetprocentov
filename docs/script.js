@@ -12,15 +12,9 @@ function addMonths(date, months) {
     let d = new Date(date);
     let day = d.getDate();
     d.setMonth(d.getMonth() + months);
-
-    // защита от переполнения месяца
-    if (d.getDate() < day) {
-        d.setDate(0);
-    }
+    if (d.getDate() < day) d.setDate(0);
     return d;
 }
-
-/* ===== ОСНОВНАЯ ФУНКЦИЯ РАСЧЁТА ===== */
 
 function calculateDeposit({
     startDate,
@@ -37,13 +31,10 @@ function calculateDeposit({
     let balance = deposit;
     let totalInterest = 0;
 
-    // период начисления в месяцах
     let periodMonths = 0;
     if (period === 1) periodMonths = 1;
     if (period === 2) periodMonths = 3;
-
-    /* ===== НАЧИСЛЕНИЕ В КОНЦЕ СРОКА ===== */
-    if (period === 0) {
+    if (!capitalization) {
         let daysLeft = days;
 
         while (daysLeft > 0) {
@@ -56,7 +47,7 @@ function calculateDeposit({
             );
 
             let interestPart =
-                balance * (interest / 100) * chunk / yearDays;
+                deposit * (interest / 100) * chunk / yearDays;
 
             totalInterest += interestPart;
             daysLeft -= chunk;
@@ -67,41 +58,45 @@ function calculateDeposit({
 
         return {
             income: totalInterest,
+            finalAmount: deposit + totalInterest,
+            endDate
+        };
+    }
+
+    if (period === 0) {
+        let yearDays = daysInYear(currentDate);
+        totalInterest = balance * (interest / 100) * days / yearDays;
+
+        return {
+            income: totalInterest,
             finalAmount: balance + totalInterest,
             endDate
         };
     }
 
-    /* ===== ПЕРИОДИЧЕСКОЕ НАЧИСЛЕНИЕ ===== */
     while (currentDate < endDate) {
         let nextDate = addMonths(currentDate, periodMonths);
         if (nextDate > endDate) nextDate = endDate;
 
         let periodDays =
-            Math.floor((nextDate - currentDate) / 86400000);
+            Math.floor((nextDate - currentDate) / 86400000) + 1; // ✅ фикс
 
         let yearDays = daysInYear(currentDate);
 
         let interestPart =
             balance * (interest / 100) * periodDays / yearDays;
 
-        if (capitalization) {
-            balance += interestPart;
-        } else {
-            totalInterest += interestPart;
-        }
+        balance += interestPart;
 
         currentDate = nextDate;
     }
 
     return {
-        income: capitalization ? balance - deposit : totalInterest,
-        finalAmount: capitalization ? balance : deposit + totalInterest,
+        income: balance - deposit,
+        finalAmount: balance,
         endDate
     };
 }
-
-/* ===== ФУНКЦИЯ, КОТОРУЮ ВЫЗЫВАЕТ КНОПКА ===== */
 
 function calculate() {
     const dateStart = document.getElementById("dateStart").value;
@@ -134,8 +129,6 @@ function calculate() {
 Дата возврата: ${result.endDate.toLocaleDateString()}`;
 }
 
-
-
 let banksData = [];
 
 async function loadBanks() {
@@ -145,42 +138,55 @@ async function loadBanks() {
     displayBanks(banksData);
 }
 
-
-
-function sortBanksByRate() {
-    const sorted = [...banksData].sort((a, b) => b.interestRate - a.interestRate);
-    displayBanks(sorted);
+function periodText(p) {
+    if (p === 1) return "Ежемесячно";
+    if (p === 3) return "Ежеквартально";
+    return "В конце срока";
 }
-
-
 
 function displayBanks(banks) {
     const container = document.getElementById("banksContainer");
     container.innerHTML = "";
 
+    const dateStart = document.getElementById("dateStart").value;
+    const days = Number(document.getElementById("durationDays").value);
+    const deposit = Number(document.getElementById("deposit").value);
+
     banks.forEach(bank => {
         const card = document.createElement("div");
-        card.style.background = "#1a1d23";
-        card.style.padding = "15px";
-        card.style.borderRadius = "12px";
-        card.style.marginBottom = "10px";
-        card.style.border = "1px solid #262b33";
+        card.className = "bank-card";
+
+        let profitText = "";
+
+        if (dateStart && days > 0 && deposit > 0) {
+            const result = calculateDeposit({
+                startDate: dateStart,
+                days,
+                deposit,
+                interest: bank.interestRate,
+                capitalization: bank.capitalization,
+                period: bank.interestPeriod === 1 ? 1 :
+                        bank.interestPeriod === 3 ? 2 : 0
+            });
+
+            profitText = `<br><b>Доход: ${result.income.toFixed(2)} ₽</b>`;
+        }
 
         card.innerHTML = `
             <strong>${bank.bankName}</strong><br>
             ${bank.depositName}<br>
             Ставка: <b>${bank.interestRate}%</b><br>
-            Мин. сумма: ${bank.minAmount} ₽<br>
             Срок: ${bank.minDays}-${bank.maxDays} дней<br>
-            Капитализация: ${bank.capitalization ? "Да" : "Нет"}<br>
-            <button onclick="selectBank(${bank.id})">Выбрать</button>
+            Период начисления: ${periodText(bank.interestPeriod)}<br>
+            Капитализация: ${bank.capitalization ? "Да" : "Нет"}
+            ${profitText}
+            <br>
+            <button class="small-btn" onclick="selectBank(${bank.id})">Выбрать</button>
         `;
 
         container.appendChild(card);
     });
 }
-
-
 
 function selectBank(id) {
     const bank = banksData.find(b => b.id === id);
@@ -194,6 +200,48 @@ function selectBank(id) {
         document.getElementById("period").value = 2;
     else
         document.getElementById("period").value = 0;
+}
+
+function sortBanksByRate() {
+    const sorted = [...banksData].sort((a, b) => b.interestRate - a.interestRate);
+    displayBanks(sorted);
+}
+
+function sortBanksByProfit() {
+    const dateStart = document.getElementById("dateStart").value;
+    const days = Number(document.getElementById("durationDays").value);
+    const deposit = Number(document.getElementById("deposit").value);
+
+    if (!dateStart || days <= 0 || deposit <= 0) {
+        alert("Введите дату, срок и сумму.");
+        return;
+    }
+
+    const sorted = [...banksData].sort((a, b) => {
+        const resA = calculateDeposit({
+            startDate: dateStart,
+            days,
+            deposit,
+            interest: a.interestRate,
+            capitalization: a.capitalization,
+            period: a.interestPeriod === 1 ? 1 :
+                    a.interestPeriod === 3 ? 2 : 0
+        });
+
+        const resB = calculateDeposit({
+            startDate: dateStart,
+            days,
+            deposit,
+            interest: b.interestRate,
+            capitalization: b.capitalization,
+            period: b.interestPeriod === 1 ? 1 :
+                    b.interestPeriod === 3 ? 2 : 0
+        });
+
+        return resB.income - resA.income;
+    });
+
+    displayBanks(sorted);
 }
 
 window.onload = function() {
